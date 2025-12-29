@@ -98,6 +98,8 @@
 1. Worker →「Settings」→「Variables and Secrets」
 2. 添加以下变量：
    - `BARK_URL`：你的 Bark 推送地址（如 `https://api.day.app/xxxxx`）
+   - `WEBHOOK_URL`：通用 Webhook 通知地址（可选，支持 POST 请求）
+   - `DSM_WEBHOOK_URL`：Synology DSM Chat Webhook 地址（可选）
    - `PHONE_NUMBER`：备用联系电话（可选）
 
 ### 第五步：绑定域名（可选）
@@ -162,6 +164,31 @@ if (country && country !== 'CN') {
 ```
 
 > ⚠️ 曾经被境外流量攻击过，强烈建议开启地区限制！
+
+## Webhook 配置说明
+
+如果配置了 `WEBHOOK_URL`，系统在发送通知时会向该地址发送一个 `POST` 请求，Payload 格式如下：
+
+```json
+{
+  "type": "move_car",
+  "title": "🚗 挪车请求",
+  "message": "用户留言内容",
+  "notify_body": "完整的通知文本（含位置说明）",
+  "location": {
+    "lat": 30.123456,
+    "lng": 120.123456
+  },
+  "confirm_url": "车主确认页面的完整链接",
+  "timestamp": "2023-10-27T10:00:00.000Z"
+}
+```
+
+### Synology DSM Chat 支持
+
+如果配置了 `DSM_WEBHOOK_URL`，系统将按照 DSM Chat 的规则发送通知。
+- **获取地址**：DSM Chat -> 频道设置 -> 整合 -> 传入 Webhook。
+- **消息格式**：支持 Markdown 格式，并包含点击直接跳转的确认链接。
 
 ## License
 

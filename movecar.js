@@ -116,10 +116,42 @@ async function handleNotify(request, url) {
       await new Promise(resolve => setTimeout(resolve, 30000));
     }
 
-    const barkApiUrl = `${BARK_URL}/挪车请求/${encodeURIComponent(notifyBody)}?group=MoveCar&level=critical&call=1&sound=minuet&icon=https://cdn-icons-png.flaticon.com/512/741/741407.png&url=${confirmUrl}`;
+    // Bark 推送
+    if (typeof BARK_URL !== 'undefined' && BARK_URL) {
+      const barkApiUrl = `${BARK_URL}/挪车请求/${encodeURIComponent(notifyBody)}?group=MoveCar&level=critical&call=1&sound=minuet&icon=https://cdn-icons-png.flaticon.com/512/741/741407.png&url=${confirmUrl}`;
+      await fetch(barkApiUrl);
+    }
 
-    const barkResponse = await fetch(barkApiUrl);
-    if (!barkResponse.ok) throw new Error('Bark API Error');
+    // Webhook 通知
+    if (typeof WEBHOOK_URL !== 'undefined' && WEBHOOK_URL) {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'move_car',
+          title: '🚗 挪车请求',
+          message: message,
+          notify_body: notifyBody.replace(/\\n/g, '\n'),
+          location: location,
+          confirm_url: decodeURIComponent(confirmUrl),
+          timestamp: new Date().toISOString()
+        })
+      });
+    }
+
+    // Synology DSM Chat 通知
+    if (typeof DSM_WEBHOOK_URL !== 'undefined' && DSM_WEBHOOK_URL) {
+      const dsmText = `🚗 *挪车请求*\n${message ? `💬 留言: ${message}\n` : ''}${location ? '📍 已附带位置信息\n' : ''}<${decodeURIComponent(confirmUrl)}|点击进入车主确认页面>`;
+
+      const formData = new URLSearchParams();
+      formData.append('payload', JSON.stringify({ text: dsmText }));
+
+      await fetch(DSM_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' }
