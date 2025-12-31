@@ -1,4 +1,4 @@
-# MoveCar - 挪车通知系统
+﻿# MoveCar - 挪车通知系统
 
 基于 Cloudflare Workers 的智能挪车通知系统，扫码即可通知车主，保护双方隐私。
 
@@ -151,13 +151,16 @@
 
 ### 方法二：在 Worker 代码中过滤
 
-在 `movecar.js` 开头添加：
+在 `movecar.js` 的 `handleRequest` 函数开头添加：
 
 ```javascript
-// 只允许中国地区访问
-const country = request.cf?.country;
-if (country && country !== 'CN') {
-  return new Response('Access Denied', { status: 403 });
+async function handleRequest(request) {
+  const country = request.cf?.country;
+  if (country && country !== 'CN') {
+    return new Response('Access Denied', { status: 403 });
+  }
+
+  // 下面保持原有逻辑
 }
 ```
 
@@ -166,3 +169,4 @@ if (country && country !== 'CN') {
 ## License
 
 MIT
+
