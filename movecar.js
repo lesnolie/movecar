@@ -94,11 +94,13 @@ async function handleNotify(request, url) {
     const confirmUrl = encodeURIComponent(url.origin + '/owner-confirm');
 
     let notifyBody = '🚗 挪车请求';
-    if (message) notifyBody += `\\n💬 留言: ${message}`;
+    if (message) notifyBody += `
+💬 留言: ${message}`;
 
     if (location && location.lat && location.lng) {
       const urls = generateMapUrls(location.lat, location.lng);
-      notifyBody += '\\n📍 已附带位置信息，点击查看';
+      notifyBody += `
+📍 已附带位置信息，点击查看`;
 
       await MOVE_CAR_STATUS.put('requester_location', JSON.stringify({
         lat: location.lat,
@@ -106,7 +108,8 @@ async function handleNotify(request, url) {
         ...urls
       }), { expirationTtl: CONFIG.KV_TTL });
     } else {
-      notifyBody += '\\n⚠️ 未提供位置信息';
+      notifyBody += `
+⚠️ 未提供位置信息`;
     }
 
     await MOVE_CAR_STATUS.put('notify_status', 'waiting', { expirationTtl: 600 });
