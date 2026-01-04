@@ -699,10 +699,10 @@ function renderMainPage(origin) {
           <span>🔔</span>
           <span>再次通知</span>
         </button>
-        <a href="tel:${phone}" class="btn-phone">
+        ${phone ? `<a href="tel:${phone}" class="btn-phone">
           <span>📞</span>
           <span>直接打电话</span>
-        </a>
+        </a>` : ''}
       </div>
     </div>
 
