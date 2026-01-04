@@ -116,11 +116,39 @@ async function handleNotify(request, url) {
       await new Promise(resolve => setTimeout(resolve, 30000));
     }
 
-    const barkApiUrl = `${BARK_URL}/挪车请求/${encodeURIComponent(notifyBody)}?group=MoveCar&level=critical&call=1&sound=minuet&icon=https://cdn-icons-png.flaticon.com/512/741/741407.png&url=${confirmUrl}`;
+    // === 推送通道选择：优先 Bark，其次 Server酱，按照这个格式可以添加更多途径 ===
+    const hasBark = (typeof BARK_URL !== 'undefined' && String(BARK_URL).trim());
+    const hasServer = (typeof SERVER_TOKEN !== 'undefined' && String(SERVER_TOKEN).trim());
 
-    const barkResponse = await fetch(barkApiUrl);
-    if (!barkResponse.ok) throw new Error('Bark API Error');
+    if (hasBark) {
+      // Bark
+      const barkApiUrl = `${BARK_URL}/挪车请求/${encodeURIComponent(notifyBody)}?group=MoveCar&level=critical&call=1&sound=minuet&icon=https://cdn-icons-png.flaticon.com/512/741/741407.png&url=${confirmUrl}`;
 
+      const barkResponse = await fetch(barkApiUrl);
+      if (!barkResponse.ok) throw new Error('Bark API Error');
+    } else if (hasServer) {
+      // Server 酱。需在worker的变量中添加“SERVER_TOKEN”
+      const token = String(SERVER_TOKEN).trim();
+      const title = '挪车请求';
+      // 1) 把"\\n"变成"\n" 2) 再把单换行变成双换行（Markdown中两次回车才是换行）
+      const notifyText = String(notifyBody).replace(/\\n/g, '\n').replace(/\n/g, '\n\n');
+      const desp = `${notifyText}\n\n👉 车主确认入口：${url.origin}/owner-confirm`;
+      
+      const serverChanUrl =
+        `https://sctapi.ftqq.com/${encodeURIComponent(token)}.send` +
+        `?title=${encodeURIComponent(title)}` +
+        `&desp=${encodeURIComponent(desp)}`;
+
+      const scResp = await fetch(serverChanUrl, { method: 'GET' });
+      if (!scResp.ok) throw new Error('ServerChan API Error');
+      // 显示请求结果，方便调试查看接口问题
+      // const scJson = await scResp.json().catch(() => null);
+      // if (scJson && scJson.code !== 0) throw new Error(`ServerChan Error: ${scJson.message || scJson.code}`);
+    } else {
+      throw new Error('No push config: please set BARK_URL or SERVER_TOKEN');
+    }
+
+    
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' }
     });
